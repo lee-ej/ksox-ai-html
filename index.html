@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-SOX AI - 실질적 절차</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- ag-Grid CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-grid.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/styles/ag-theme-alpine.css">
+    
+    <!-- ag-Grid JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.0/dist/ag-grid-community.min.js"></script>
+    
+    <style>
+        .sidebar-transition {
+            transition: width 0.3s ease-in-out;
+        }
+        .rotate-90 {
+            transform: rotate(90deg);
+        }
+        .transition-transform {
+            transition: transform 0.2s ease-in-out;
+        }
+        .hidden {
+            display: none;
+        }
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        .submenu.expanded {
+            max-height: 500px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .file-drop-zone {
+            border: 2px dashed #d1d5db;
+            transition: border-color 0.3s ease;
+        }
+        .file-drop-zone:hover {
+            border-color: #9ca3af;
+        }
+        .file-drop-zone.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        /* ag-Grid 커스텀 스타일 */
+        .ag-theme-alpine {
+            --ag-header-height: 48px;
+            --ag-row-height: 52px;
+            --ag-font-size: 14px;
+            --ag-header-background-color: #f9fafb;
+            --ag-header-foreground-color: #6b7280;
+            --ag-odd-row-background-color: #ffffff;
+            --ag-row-hover-color: #f9fafb;
+            --ag-border-color: #e5e7eb;
+        }
+        
+        .ag-header-cell-text {
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-completed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-reviewing {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .action-button {
+            padding: 0.25rem;
+            margin: 0 0.125rem;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .action-button:hover {
+            color: #4b5563;
+        }
+        
+        .file-link {
+            color: #2563eb;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .file-link:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 상단 헤더 -->
+    <header class="bg-white border-b border-gray-200 px-4 py-3">
+        <div class="flex items-center justify-between">
+            <!-- 왼쪽 로고 및 타이틀 -->
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleSidebar()" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <div class="text-orange-600 font-bold text-lg">PwC</div>
+                    <div class="text-gray-800 font-medium">K-SOX AI</div>
+                </div>
+                <div class="text-sm text-gray-600">실질적 절차</div>
+            </div>
+            
+            <!-- 오른쪽 아이콘들 -->
+            <div class="flex items-center space-x-4">
+                <button class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fas fa-bell text-lg"></i>
+                </button>
+                <button class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fas fa-envelope text-lg"></i>
+                </button>
+                <button class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fas fa-cog text-lg"></i>
+                </button>
+                <button class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fas fa-search text-lg"></i>
+                </button>
+                <button class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fas fa-question-circle text-lg"></i>
+                </button>
+                <button class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fas fa-user text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- 왼쪽 사이드바 -->
+        <aside id="sidebar" class="w-16 bg-white border-r border-gray-200 min-h-screen sidebar-transition">
+            <!-- 축소된 사이드바 -->
+            <div id="collapsed-sidebar" class="flex flex-col items-center py-4 space-y-2">
+                <div class="relative">
+                    <button class="p-3 bg-blue-100 text-blue-600 rounded-lg relative">
+                        <div class="w-6 h-6 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">
+                            25
+                        </div>
+                    </button>
+                    <i class="fas fa-chevron-right absolute -right-2 top-1/2 transform -translate-y-1/2 text-blue-600 text-sm"></i>
+                </div>
+                
+                <button onclick="showPage('dashboard')" class="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i class="fas fa-home text-lg"></i>
+                </button>
+                
+                <button class="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i class="fas fa-folder text-lg"></i>
+                </button>
+                
+                <button class="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i class="fas fa-file-text text-lg"></i>
+                </button>
+                
+                <button class="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i class="fas fa-bullseye text-lg"></i>
+                </button>
+                
+                <button class="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i class="fas fa-chart-bar text-lg"></i>
+                </button>
+                
+                <button onclick="showPage('population-import')" class="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i class="fas fa-bolt text-lg"></i>
+                </button>
+                
+                <button class="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i class="fas fa-archive text-lg"></i>
+                </button>
+                
+                <button class="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i class="fas fa-shield-alt text-lg"></i>
+                </button>
+                
+                <div class="flex-1"></div>
+                
+                <button class="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    <i class="fas fa-cog text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 확장된 사이드바 -->
+            <div id="expanded-sidebar" class="p-4 hidden">
+                <!-- 상단 제목 -->
+                <div class="flex items-center justify-between mb-6 p-2 bg-blue-600 text-white rounded-lg">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-6 h-6 bg-white text-blue-600 rounded text-xs flex items-center justify-center font-bold">
+                            25
+                        </div>
+                        <span class="text-sm font-medium">2025년 중간평가</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-sm"></i>
+                </div>
+
+                <!-- 메뉴 섹션들 -->
+                <div class="space-y-6">
+                    <!-- 모니터링 -->
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">모니터링</h3>
+                        <div class="space-y-1">
+                            <div id="dashboard-menu" class="flex items-center space-x-3 p-2 bg-orange-100 text-orange-700 rounded-lg cursor-pointer" onclick="showPage('dashboard')">
+                                <i class="fas fa-chart-bar text-lg"></i>
+                                <span class="text-sm font-medium">대시보드</span>
+                            </div>
+                            <div class="flex items-center space-x-3 p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                <i class="fas fa-users text-lg"></i>
+                                <span class="text-sm">부서별 진척관리</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 내부통제 업무 -->
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">내부통제 업무</h3>
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer" onclick="toggleSubmenu('rcm')">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-clipboard text-lg"></i>
+                                    <span class="text-sm">RCM 관리</span>
+                                </div>
+                                <i id="rcm-arrow" class="fas fa-chevron-right text-xs transition-transform"></i>
+                            </div>
+
+                            <!-- RCM 관리 서브메뉴 -->
+                            <div id="rcm-submenu" class="submenu ml-6 mt-1 space-y-1">
+                                <div class="flex items-center space-x-3 p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                    <div class="w-4 h-4 flex items-center justify-center">
+                                        <div class="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>
+                                    </div>
+                                    <span class="text-sm">프로세스</span>
+                                </div>
+                                <div class="flex items-center justify-between p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-4 h-4 flex items-center justify-center">
+                                            <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                                        </div>
+                                        <span class="text-sm">통제활동</span>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-xs"></i>
+                                </div>
+                                <div class="flex items-center justify-between p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-4 h-4 flex items-center justify-center">
+                                            <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                                        </div>
+                                        <span class="text-sm">평가 설계</span>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-xs"></i>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-bullseye text-lg"></i>
+                                    <span class="text-sm">Scoping</span>
+                                </div>
+                                <i class="fas fa-chevron-right text-xs"></i>
+                            </div>
+                            <div class="flex items-center justify-between p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-cog text-lg"></i>
+                                    <span class="text-sm">설계평가</span>
+                                </div>
+                                <i class="fas fa-chevron-right text-xs"></i>
+                            </div>
+
+                            <div class="flex items-center justify-between p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer" onclick="toggleSubmenu('operation')">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-bolt text-lg"></i>
+                                    <span class="text-sm">운영평가</span>
+                                </div>
+                                <i id="operation-arrow" class="fas fa-chevron-right text-xs transition-transform"></i>
+                            </div>
+
+                            <!-- 운영평가 서브메뉴 -->
+                            <div id="operation-submenu" class="submenu ml-6 mt-1 space-y-1">
+                                <div class="flex items-center space-x-3 p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                    <i class="fas fa-check-circle text-sm text-green-600"></i>
+                                    <span class="text-sm">통제활동 선택</span>
+                                </div>
+                                <div id="population-menu" class="flex items-center space-x-3 p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer" onclick="showPage('population-import')">
+                                    <i class="fas fa-user text-sm text-blue-600"></i>
+                                    <span class="text-sm">모집단 Import</span>
+                                </div>
+                                <div class="flex items-center space-x-3 p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                    <i class="far fa-circle text-sm text-gray-500"></i>
+                                    <span class="text-sm">샘플링</span>
+                                </div>
+                                <div class="flex items-center space-x-3 p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                    <i class="fas fa-folder text-sm text-yellow-600"></i>
+                                    <span class="text-sm">증빙 Import</span>
+                                </div>
+                                <div class="flex items-center space-x-3 p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                    <i class="fas fa-clock text-sm text-purple-600"></i>
+                                    <span class="text-sm">운영평가 시 테스트</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-file-text text-lg"></i>
+                                    <span class="text-sm">법규와 보고</span>
+                                </div>
+                                <i class="fas fa-chevron-right text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 자료실 -->
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">자료실</h3>
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-3 p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                <i class="fas fa-archive text-lg"></i>
+                                <span class="text-sm">내부회계관리규정</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 설정 -->
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">설정</h3>
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between p-2 text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-cog text-lg"></i>
+                                    <span class="text-sm">설정</span>
+                                </div>
+                                <i class="fas fa-chevron-right text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <main class="flex-1 p-6 bg-gray-50">
+            <!-- 대시보드 페이지 -->
+            <div id="dashboard-page" class="max-w-7xl mx-auto space-y-6">
+                <!-- 상단 진행률 카드들 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-lg p-6 border border-gray-200">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                            <span class="text-sm text-gray-600">전체 진행률</span>
+                        </div>
+                        <div class="text-3xl font-bold text-gray-900 mb-3">68%</div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="bg-orange-500 h-2 rounded-full" style="width: 68%"></div>
+                        </div>
+                        <div class="text-sm text-blue-600">내부통제 전체 진행 상황</div>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-6 border border-gray-200">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                            <span class="text-sm text-gray-600">Scoping</span>
+                        </div>
+                        <div class="text-3xl font-bold text-gray-900 mb-3">72%</div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="bg-orange-500 h-2 rounded-full" style="width: 72%"></div>
+                        </div>
+                        <div class="text-sm text-blue-600">내부통제 범위 설정</div>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-6 border border-gray-200">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                            <span class="text-sm text-gray-600">설계평가</span>
+                        </div>
+                        <div class="text-3xl font-bold text-gray-900 mb-3">65%</div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="bg-orange-500 h-2 rounded-full" style="width: 65%"></div>
+                        </div>
+                        <div class="text-sm text-blue-600">내부통제 설계 유효성</div>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-6 border border-gray-200">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                            <span class="text-sm text-gray-600">운영평가</span>
+                        </div>
+                        <div class="text-3xl font-bold text-gray-900 mb-3">67%</div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="bg-orange-500 h-2 rounded-full" style="width: 67%"></div>
+                        </div>
+                        <div class="text-sm text-blue-600">내부통제 운영 유효성</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 평가일정 조회 -->
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">평가일정 조회</h3>
+                            <i class="fas fa-sync-alt text-gray-400"></i>
+                        </div>
+                        <div class="p-4 space-y-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-900">모집단</div>
+                                    <div class="text-sm text-gray-500">시작일: 20200901</div>
+                                    <div class="text-sm text-gray-500">종료일: 20200930</div>
+                                    <div class="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded mt-1">완료</div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-900">설계평가</div>
+                                    <div class="text-sm text-gray-500">시작일: 20200701</div>
+                                    <div class="text-sm text-gray-500">종료일: 20200831</div>
+                                    <div class="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded mt-1">완료</div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-900">운영평가</div>
+                                    <div class="text-sm text-gray-500">시작일: 20201001</div>
+                                    <div class="text-sm text-gray-500">종료일: 20201031</div>
+                                    <div class="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded mt-1">진행중</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Q&A게시판 -->
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">Q&A게시판</h3>
+                            <i class="fas fa-sync-alt text-gray-400"></i>
+                        </div>
+                        <div class="p-4 space-y-3">
+                            <div class="border-l-4 border-orange-400 pl-3">
+                                <div class="text-sm font-medium text-gray-900">운영평가 시 모집단 파일 가져오기 문의</div>
+                                <div class="text-xs text-gray-500 mt-1">김지현 • 2020-04-20</div>
+                            </div>
+                            
+                            <div class="border-l-4 border-orange-400 pl-3">
+                                <div class="text-sm font-medium text-gray-900">승인절차 승인완료메일이 오지않습니다.</div>
+                                <div class="text-xs text-gray-500 mt-1">박지수 • 2020-05-25</div>
+                            </div>
+                            
+                            <div class="border-l-4 border-orange-400 pl-3">
+                                <div class="text-sm font-medium text-gray-900">설계평가 결과 보고서 양식 문의</div>
+                                <div class="text-xs text-gray-500 mt-1">이민수 • 2020-06-10</div>
+                            </div>
+                            
+                            <div class="border-l-4 border-orange-400 pl-3">
+                                <div class="text-sm font-medium text-gray-900">통제활동 매트릭스 작성 방법</div>
+                                <div class="text-xs text-gray-500 mt-1">정하연 • 2020-07-15</div>
+                            </div>
+                            
+                            <div class="border-l-4 border-orange-400 pl-3">
+                                <div class="text-sm font-medium text-gray-900">내부통제 시스템 접속 오류 해결</div>
+                                <div class="text-xs text-gray-500 mt-1">최영호 • 2020-08-03</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 승인 대기 -->
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">승인 대기</h3>
+                            <i class="fas fa-sync-alt text-gray-400"></i>
+                        </div>
+                        <div class="p-4">
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="text-center">
+                                    <div class="relative">
+                                        <i class="fas fa-file-text text-4xl text-blue-600 mx-auto mb-2"></i>
+                                        <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">20</div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">모집단</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="relative">
+                                        <i class="fas fa-chart-bar text-4xl text-blue-600 mx-auto mb-2"></i>
+                                        <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">21</div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">실계평가</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="relative">
+                                        <i class="fas fa-bullseye text-4xl text-blue-600 mx-auto mb-2"></i>
+                                        <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">15</div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">운영평가</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 검토 대기 -->
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">검토 대기</h3>
+                            <i class="fas fa-sync-alt text-gray-400"></i>
+                        </div>
+                        <div class="p-4">
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="text-center">
+                                    <div class="relative">
+                                        <i class="fas fa-file-text text-4xl text-blue-600 mx-auto mb-2"></i>
+                                        <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">17</div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">모집단</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="relative">
+                                        <i class="fas fa-chart-bar text-4xl text-blue-600 mx-auto mb-2"></i>
+                                        <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">33</div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">실계평가</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="relative">
+                                        <i class="fas fa-bullseye text-4xl text-blue-600 mx-auto mb-2"></i>
+                                        <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">12</div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">운영평가</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 자료실 -->
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">자료실</h3>
+                            <i class="fas fa-sync-alt text-gray-400"></i>
+                        </div>
+                        <div class="p-4 space-y-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-file-text text-orange-500"></i>
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-900">내부통제관리지침 모범규준</div>
+                                    <div class="text-xs text-gray-500">2020-01-02</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-file-text text-orange-500"></i>
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-900">사용자 교육 동영상</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 진행 현황 -->
+                <div class="bg-white rounded-lg border border-gray-200">
+                    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">진행 현황</h3>
+                        <i class="fas fa-sync-alt text-gray-400"></i>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-600">모집단</div>
+                                <div class="text-sm text-gray-600">수행률</div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-2xl font-bold text-gray-900">29/49</span>
+                                <i class="fas fa-exclamation-circle text-orange-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 모집단 Import 페이지 -->
+            <div id="population-import-page" class="hidden">
+                <div class="max-w-7xl mx-auto">
+                    <!-- 헤더 -->
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-2xl font-bold text-orange-600">모집단 Import</h1>
+                        <div class="flex items-center space-x-3">
+                            <button class="flex items-center space-x-2 px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-sync-alt text-sm"></i>
+                                <span class="text-sm">새로고침</span>
+                            </button>
+                            <button class="flex items-center space-x-2 px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-print text-sm"></i>
+                                <span class="text-sm">출력</span>
+                            </button>
+                            <button onclick="openUploadModal()" class="flex items-center space-x-2 px-4 py-2 text-white bg-black rounded-lg hover:bg-gray-800 transition-colors">
+                                <i class="fas fa-upload text-sm"></i>
+                                <span class="text-sm">모집단 업로드</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 통계 카드들 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-lg p-6 border border-gray-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">전체 업로드</p>
+                                    <p class="text-3xl font-bold text-gray-900">12</p>
+                                </div>
+                                <i class="fas fa-upload text-3xl text-gray-400"></i>
+                            </div>
+                            <p class="text-sm text-green-600">+2 from last month</p>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 border border-gray-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">완료</p>
+                                    <p class="text-3xl font-bold text-green-600">8</p>
+                                </div>
+                                <i class="fas fa-check-circle text-3xl text-green-500"></i>
+                            </div>
+                            <p class="text-sm text-gray-500">66.7% 완료율</p>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 border border-gray-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">검토중</p>
+                                    <p class="text-3xl font-bold text-yellow-600">3</p>
+                                </div>
+                                <i class="fas fa-clock text-3xl text-yellow-500"></i>
+                            </div>
+                            <p class="text-sm text-gray-500">25% 진행중</p>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 border border-gray-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">오류</p>
+                                    <p class="text-3xl font-bold text-red-600">1</p>
+                                </div>
+                                <i class="fas fa-exclamation-triangle text-3xl text-red-500"></i>
+                            </div>
+                            <p class="text-sm text-gray-500">8.3% 오류율</p>
+                        </div>
+                    </div>
+
+                    <!-- ag-Grid 테이블 -->
+                    <div class="bg-white rounded-lg border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">모집단 업로드 목록</h3>
+                        </div>
+                        <div class="p-6">
+                            <div id="populationGrid" class="ag-theme-alpine" style="height: 500px; width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 모집단 파일 업로드 모달 -->
+    <div id="uploadModal" class="modal">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+            <!-- 모달 헤더 -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">모집단 파일 업로드</h2>
+                <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- 모달 내용 -->
+            <div class="p-6">
+                <form id="uploadForm">
+                    <!-- 통제활동 및 평가기간 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">통제활동</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">통제활동을 선택하세요</option>
+                                <option value="sales">매출 승인 통제</option>
+                                <option value="purchase">구매 승인 통제</option>
+                                <option value="payroll">급여 계산 통제</option>
+                                <option value="inventory">재고 관리 통제</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">평가기간</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">평가기간을 선택하세요</option>
+                                <option value="2024-q1">2024년 1분기</option>
+                                <option value="2024-q2">2024년 2분기</option>
+                                <option value="2024-q3">2024년 3분기</option>
+                                <option value="2024-q4">2024년 4분기</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 파일 선택 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">파일 선택</label>
+                        <div class="file-drop-zone bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:bg-gray-100 transition-colors" 
+                             onclick="document.getElementById('fileInput').click()"
+                             ondrop="handleDrop(event)" 
+                             ondragover="handleDragOver(event)" 
+                             ondragenter="handleDragEnter(event)" 
+                             ondragleave="handleDragLeave(event)">
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">클릭하여 파일을 선택하거나 드래그하여 업로드하세요</p>
+                                <p class="text-sm text-gray-500">Excel 파일만 지원 (xlsx, xls, csv)</p>
+                            </div>
+                            <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)">
+                        </div>
+                        <div id="selectedFile" class="mt-2 text-sm text-gray-600 hidden">
+                            <i class="fas fa-file-excel text-green-600 mr-2"></i>
+                            <span id="fileName"></span>
+                            <button type="button" onclick="removeFile()" class="ml-2 text-red-500 hover:text-red-700">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 설명 -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">설명</label>
+                        <textarea 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
+                            rows="4" 
+                            placeholder="모집단 파일에 대한 설명을 입력하세요"></textarea>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeUploadModal()" class="px-6 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
+                            취소
+                        </button>
+                        <button type="submit" class="px-6 py-2 text-white bg-black rounded-lg hover:bg-gray-800 transition-colors">
+                            업로드
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sidebarOpen = false;
+        let expandedMenus = [];
+        let selectedFile = null;
+        let currentPage = 'dashboard';
+        let gridApi = null;
+
+        // ag-Grid 데이터
+        const rowData = [
+            {
+                controlId: 'C001',
+                controlName: '매출 승인 통제',
+                process: '매출',
+                cycle: '수익',
+                fileName: 'sales_population_2024.xlsx',
+                uploadDate: '2024-01-15',
+                recordCount: '1,250',
+                status: '완료',
+                uploader: '김재호'
+            },
+            {
+                controlId: 'C002',
+                controlName: '구매 승인 통제',
+                process: '구매',
+                cycle: '지출',
+                fileName: 'purchase_population_2024.xlsx',
+                uploadDate: '2024-01-14',
+                recordCount: '890',
+                status: '검토중',
+                uploader: '이영희'
+            },
+            {
+                controlId: 'C003',
+                controlName: '급여 계산 통제',
+                process: '급여',
+                cycle: '인사',
+                fileName: 'payroll_population_2024.xlsx',
+                uploadDate: '2024-01-13',
+                recordCount: '450',
+                status: '오류',
+                uploader: '박민수'
+            },
+            {
+                controlId: 'C004',
+                controlName: '재고 관리 통제',
+                process: '재고',
+                cycle: '자산',
+                fileName: 'inventory_population_2024.xlsx',
+                uploadDate: '2024-01-12',
+                recordCount: '2,100',
+                status: '완료',
+                uploader: '정수진'
+            },
+            {
+                controlId: 'C005',
+                controlName: '현금 관리 통제',
+                process: '현금',
+                cycle: '자산',
+                fileName: 'cash_population_2024.xlsx',
+                uploadDate: '2024-01-11',
+                recordCount: '680',
+                status: '검토중',
+                uploader: '최민호'
+            }
+        ];
+
+        // ag-Grid 컬럼 정의
+        const columnDefs = [
+            {
+                headerName: '통제ID',
+                field: 'controlId',
+                width: 100,
+                pinned: 'left'
+            },
+            {
+                headerName: '통제명',
+                field: 'controlName',
+                width: 180,
+                flex: 1
+            },
+            {
+                headerName: '프로세스',
+                field: 'process',
+                width: 120
+            },
+            {
+                headerName: '사이클',
+                field: 'cycle',
+                width: 100
+            },
+            {
+                headerName: '파일명',
+                field: 'fileName',
+                width: 250,
+                cellRenderer: function(params) {
+                    return `<a href="#" class="file-link" onclick="downloadFile('${params.value}')">${params.value}</a>`;
+                }
+            },
+            {
+                headerName: '업로드일',
+                field: 'uploadDate',
+                width: 120
+            },
+            {
+                headerName: '레코드 수',
+                field: 'recordCount',
+                width: 120,
+                cellStyle: { textAlign: 'right' }
+            },
+            {
+                headerName: '상태',
+                field: 'status',
+                width: 100,
+                cellRenderer: function(params) {
+                    const status = params.value;
+                    let className = 'status-badge ';
+                    
+                    switch(status) {
+                        case '완료':
+                            className += 'status-completed';
+                            break;
+                        case '검토중':
+                            className += 'status-reviewing';
+                            break;
+                        case '오류':
+                            className += 'status-error';
+                            break;
+                        default:
+                            className += 'status-completed';
+                    }
+                    
+                    return `<span class="${className}">${status}</span>`;
+                }
+            },
+            {
+                headerName: '업로더',
+                field: 'uploader',
+                width: 100
+            },
+            {
+                headerName: '작업',
+                field: 'actions',
+                width: 100,
+                cellRenderer: function(params) {
+                    return `
+                        <div class="flex items-center justify-center space-x-2">
+                            <i class="fas fa-download action-button" onclick="downloadFile('${params.data.fileName}')" title="다운로드"></i>
+                            <i class="fas fa-eye action-button" onclick="viewDetails('${params.data.controlId}')" title="상세보기"></i>
+                        </div>
+                    `;
+                },
+                sortable: false,
+                filter: false
+            }
+        ];
+
+        // ag-Grid 옵션
+        const gridOptions = {
+            columnDefs: columnDefs,
+            rowData: rowData,
+            defaultColDef: {
+                sortable: true,
+                filter: true,
+                resizable: true
+            },
+            pagination: true,
+            paginationPageSize: 10,
+            rowSelection: 'single',
+            animateRows: true,
+            enableRangeSelection: true,
+            suppressRowClickSelection: true,
+            onGridReady: function(params) {
+                gridApi = params.api;
+                params.api.sizeColumnsToFit();
+            },
+            onFirstDataRendered: function(params) {
+                params.api.sizeColumnsToFit();
+            }
+        };
+
+        // ag-Grid 초기화
+        function initializeGrid() {
+            const gridDiv = document.querySelector('#populationGrid');
+            if (gridDiv) {
+                new agGrid.Grid(gridDiv, gridOptions);
+            }
+        }
+
+        // 파일 다운로드 함수
+        function downloadFile(fileName) {
+            alert(`${fileName} 파일을 다운로드합니다.`);
+            // 실제 다운로드 로직 구현
+        }
+
+        // 상세보기 함수
+        function viewDetails(controlId) {
+            alert(`${controlId} 통제의 상세 정보를 표시합니다.`);
+            // 실제 상세보기 모달 구현
+        }
+
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            const sidebar = document.getElementById('sidebar');
+            const collapsedSidebar = document.getElementById('collapsed-sidebar');
+            const expandedSidebar = document.getElementById('expanded-sidebar');
+
+            if (sidebarOpen) {
+                sidebar.classList.remove('w-16');
+                sidebar.classList.add('w-64');
+                collapsedSidebar.classList.add('hidden');
+                expandedSidebar.classList.remove('hidden');
+            } else {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-16');
+                collapsedSidebar.classList.remove('hidden');
+                expandedSidebar.classList.add('hidden');
+            }
+        }
+
+        function toggleSubmenu(menuId) {
+            const submenu = document.getElementById(menuId + '-submenu');
+            const arrow = document.getElementById(menuId + '-arrow');
+            
+            if (expandedMenus.includes(menuId)) {
+                expandedMenus = expandedMenus.filter(id => id !== menuId);
+                submenu.classList.remove('expanded');
+                arrow.classList.remove('rotate-90');
+            } else {
+                expandedMenus.push(menuId);
+                submenu.classList.add('expanded');
+                arrow.classList.add('rotate-90');
+            }
+        }
+
+        function showPage(pageId) {
+            currentPage = pageId;
+            
+            // 모든 페이지 숨기기
+            document.getElementById('dashboard-page').classList.add('hidden');
+            document.getElementById('population-import-page').classList.add('hidden');
+            
+            // 메뉴 활성 상태 초기화
+            const dashboardMenu = document.getElementById('dashboard-menu');
+            const populationMenu = document.getElementById('population-menu');
+            
+            if (dashboardMenu) {
+                dashboardMenu.classList.remove('bg-orange-100', 'text-orange-700');
+                dashboardMenu.classList.add('text-gray-600', 'hover:bg-gray-50');
+            }
+            
+            if (populationMenu) {
+                populationMenu.classList.remove('bg-orange-100', 'text-orange-700');
+                populationMenu.classList.add('text-gray-600', 'hover:bg-gray-50');
+            }
+            
+            // 선택된 페이지 보이기 및 메뉴 활성화
+            if (pageId === 'population-import') {
+                document.getElementById('population-import-page').classList.remove('hidden');
+                if (populationMenu) {
+                    populationMenu.classList.add('bg-orange-100', 'text-orange-700');
+                    populationMenu.classList.remove('text-gray-600', 'hover:bg-gray-50');
+                }
+                // 운영평가 서브메뉴 자동 확장
+                if (!expandedMenus.includes('operation')) {
+                    toggleSubmenu('operation');
+                }
+                
+                // ag-Grid 초기화 (페이지가 표시된 후)
+                setTimeout(() => {
+                    if (gridApi) {
+                        gridApi.sizeColumnsToFit();
+                    } else {
+                        initializeGrid();
+                    }
+                }, 100);
+            } else {
+                document.getElementById('dashboard-page').classList.remove('hidden');
+                if (dashboardMenu) {
+                    dashboardMenu.classList.add('bg-orange-100', 'text-orange-700');
+                    dashboardMenu.classList.remove('text-gray-600', 'hover:bg-gray-50');
+                }
+            }
+        }
+
+        // 모달 관련 함수들
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('show');
+            document.body.style.overflow = 'auto';
+            resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById('uploadForm').reset();
+            document.getElementById('selectedFile').classList.add('hidden');
+            selectedFile = null;
+        }
+
+        // 파일 드래그 앤 드롭 관련 함수들
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.target.closest('.file-drop-zone').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            if (!e.target.closest('.file-drop-zone').contains(e.relatedTarget)) {
+                e.target.closest('.file-drop-zone').classList.remove('dragover');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.target.closest('.file-drop-zone').classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            // 파일 형식 검증
+            const allowedTypes = ['.xlsx', '.xls', '.csv'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (!allowedTypes.includes(fileExtension)) {
+                alert('Excel 파일만 업로드 가능합니다. (xlsx, xls, csv)');
+                return;
+            }
+
+            selectedFile = file;
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('selectedFile').classList.remove('hidden');
+        }
+
+        function removeFile() {
+            selectedFile = null;
+            document.getElementById('selectedFile').classList.add('hidden');
+            document.getElementById('fileInput').value = '';
+        }
+
+        // 폼 제출 처리
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!selectedFile) {
+                alert('파일을 선택해주세요.');
+                return;
+            }
+
+            // 여기서 실제 업로드 로직을 구현
+            alert('파일이 성공적으로 업로드되었습니다.');
+            closeUploadModal();
+            
+            // 그리드 데이터 새로고침 (실제로는 서버에서 데이터를 가져와야 함)
+            if (gridApi) {
+                // 새로운 데이터 추가 예시
+                const newRow = {
+                    controlId: 'C00' + (rowData.length + 1),
+                    controlName: '새로운 통제',
+                    process: '기타',
+                    cycle: '기타',
+                    fileName: selectedFile.name,
+                    uploadDate: new Date().toISOString().split('T')[0],
+                    recordCount: '0',
+                    status: '검토중',
+                    uploader: '현재사용자'
+                };
+                
+                rowData.push(newRow);
+                gridApi.setRowData(rowData);
+            }
+        });
+
+        // 모달 외부 클릭 시 닫기
+        document.getElementById('uploadModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUploadModal();
+            }
+        });
+
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeUploadModal();
+            }
+        });
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            showPage('dashboard');
+        });
+
+        // 윈도우 리사이즈 시 그리드 크기 조정
+        window.addEventListener('resize', function() {
+            if (gridApi && currentPage === 'population-import') {
+                setTimeout(() => {
+                    gridApi.sizeColumnsToFit();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>
